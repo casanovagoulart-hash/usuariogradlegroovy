@@ -13,7 +13,6 @@ import org.springframework.security.config.annotation.web.configurers.AbstractHt
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
@@ -45,7 +44,9 @@ public class SecurityConfig {
 
                 .csrf(AbstractHttpConfigurer::disable) // Desativa proteção CSRF para APIs REST (não aplicável a APIs que não mantêm estado)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers("/usuario/login").permitAll() // Permite acesso ao endpoint de login sem autenticação
+                        .requestMatchers("/usuario/login").permitAll() // Permite acesso ao endpoint de login sem autenticação.
+                        // /error: rota interna do Spring que mostra o erro real; sem liberar, qualquer erro vira 401 mascarado
+                        .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth").permitAll()// Permite acesso ao endpoint GET /auth sem autenticação
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll() // Permite acesso ao endpoint POST /usuario sem autenticação
                         .requestMatchers("/usuario/**").authenticated() // Requer autenticação para qualquer endpoint que comece com /usuario/
@@ -60,9 +61,12 @@ public class SecurityConfig {
         return http.build();
     }
 
-    // Configura o PasswordEncoder para criptografar senhas usando BCrypt
+    // Antes o PasswordEncoder para criptografar senhas usando BCrypt.
+    // @Bean: ( BCryptPasswordEncoder bCryptPasswordEncoder ) ensina o Spring a criar e
+    // guardar este objeto para injetá-lo onde for pedido.
+    // (É isso que o UsuarioService precisa para criptografar a senha).
     @Bean
-    public PasswordEncoder passwordEncoder() {
+    public BCryptPasswordEncoder bCryptPasswordEncoder() {
         return new BCryptPasswordEncoder(); // Retorna uma instância de BCryptPasswordEncoder
     }
 

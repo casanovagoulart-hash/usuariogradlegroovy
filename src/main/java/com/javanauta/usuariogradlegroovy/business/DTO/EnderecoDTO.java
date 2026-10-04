@@ -1,16 +1,17 @@
 package com.javanauta.usuariogradlegroovy.business.DTO;
 
-import jakarta.persistence.Entity;
+import jakarta.persistence.Column;
 import lombok.*;
 
 @Builder
-@Entity
 @AllArgsConstructor
 @NoArgsConstructor
-@Data
 @Getter
 @Setter
 public class EnderecoDTO {
+
+    @Column(name = "id", nullable = false, length = 200)
+    private String id;
 
     private String rua;
     private Long numero;
