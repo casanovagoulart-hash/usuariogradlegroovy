@@ -29,9 +29,19 @@ dependencies {
 	testImplementation 'org.springframework.boot:spring-boot-starter-mail-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-security-test'
 	testImplementation 'org.springframework.boot:spring-boot-starter-webmvc-test'
+
+	// Banco em memória H2, usado para testes (não sobe para a aplicação real)
+	testRuntimeOnly 'com.h2database:h2'
+
 	testCompileOnly 'org.projectlombok:lombok'
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 	testAnnotationProcessor 'org.projectlombok:lombok'
+	// API do JWT (Claims, Jwts etc.)
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	// Implementação usada só em tempo de execução
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	// Serialização JSON dos tokens
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
 }
 
 tasks.named('test') {
