@@ -39,7 +39,7 @@ public class JwtRequestFilter extends OncePerRequestFilter {
             final String token = authorizationHeader.substring(7);
             try {
                 // extractClaims já valida assinatura e expiração; se falhar, cai no catch
-                final String username = jwtUtil.extractUsername(token);
+                final String username = jwtUtil.extrairEmaildoToken(token);
 
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);

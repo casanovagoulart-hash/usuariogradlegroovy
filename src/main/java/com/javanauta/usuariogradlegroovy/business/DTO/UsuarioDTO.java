@@ -4,6 +4,8 @@ import lombok.*;
 
 import java.util.List;
 
+// Lombok: gera getters, setters, construtores e builder automaticamente
+// @NoArgsConstructor: o Jackson precisa de um construtor vazio para montar o objeto a partir do JSON
 @Builder
 @Getter
 @Setter
@@ -16,5 +18,4 @@ public class UsuarioDTO {
     private String senha;
     private List<EnderecoDTO> enderecos;
     private List<TelefoneDTO> telefones;
-
 }
