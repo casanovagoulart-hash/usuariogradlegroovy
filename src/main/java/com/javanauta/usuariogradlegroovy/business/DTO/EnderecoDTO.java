@@ -11,8 +11,7 @@ import lombok.*;
 public class EnderecoDTO {
 
     @Column(name = "id", nullable = false, length = 200)
-    private String id;
-
+    private Long id;
     private String rua;
     private Long numero;
     private String complemento;
