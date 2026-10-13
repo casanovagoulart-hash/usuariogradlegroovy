@@ -57,6 +57,8 @@ public class UsuarioConverter {
 
     public UsuarioDTO paraUsuarioDTO(Usuario usuario) {
         return UsuarioDTO.builder()
+    // id: vem do banco (gerado automaticamente), então é só copiar da entidade para o DTO
+                .id(usuario.getId())
                 .nome(usuario.getNome())
                 .email(usuario.getEmail())
                 .senha(usuario.getSenha())
@@ -96,8 +98,8 @@ public class UsuarioConverter {
 
     public Usuario updateUsuario(UsuarioDTO usuarioDTO,  Usuario entity) {
         return Usuario.builder()
-                .nome(usuarioDTO.getNome() != null ? usuarioDTO.getNome() : entity.getNome())
                 .id(entity.getId())
+                .nome(usuarioDTO.getNome() != null ? usuarioDTO.getNome() : entity.getNome())
                 .senha(usuarioDTO.getSenha() != null ? usuarioDTO.getSenha() : entity.getSenha())
                 .email(usuarioDTO.getEmail() != null ? usuarioDTO.getEmail() : entity.getEmail())
                 .enderecos(entity.getEnderecos())
@@ -126,6 +128,27 @@ public class UsuarioConverter {
                 .ddd(dto.getDdd() != null ? dto.getDdd() : entity.getDdd())
                 .numero(dto.getNumero() != null ? dto.getNumero() : entity.getNumero())
 
+                .build();
+    }
+
+    public Endereco paraEnderecoEntity(EnderecoDTO dto, Long idUsuario) {
+        return Endereco.builder()
+                .rua(dto.getRua())
+                .numero(dto.getNumero())
+                .complemento(dto.getComplemento())
+                .bairro(dto.getBairro())
+                .cidade(dto.getCidade())
+                .estado(dto.getEstado())
+                .cep(dto.getCep())
+                .usuario_id(idUsuario)
+                .build();
+    }
+
+    public Telefone paraTelefoneEntity(TelefoneDTO dto, Long idUsuario) {
+        return Telefone.builder()
+                .numero(dto.getNumero())
+                .ddd(dto.getDdd())
+                .usuario_id(idUsuario)
                 .build();
     }
 
