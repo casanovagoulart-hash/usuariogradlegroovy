@@ -16,14 +16,16 @@ public class UsuarioConverter {
     // ---------- DTO -> Entidade ----------
 
     public Usuario paraUsuario(UsuarioDTO usuarioDTO) {
-        Usuario.UsuarioBuilder builder = Usuario.builder();
-        builder.nome(usuarioDTO.getNome());
-        builder.email(usuarioDTO.getEmail());
-        builder.senha(usuarioDTO.getSenha());
-        builder.enderecos(paraListaEndereco(usuarioDTO.getEnderecos()));
-        builder.telefones(paraListaTelefone(usuarioDTO.getTelefones()));
-        return builder
+        return Usuario.builder()
+        .nome(usuarioDTO.getNome())
+        .email(usuarioDTO.getEmail())
+        .senha(usuarioDTO.getSenha())
+        .enderecos(usuarioDTO.getEnderecos() != null ?
+                paraListaEndereco(usuarioDTO.getEnderecos()) : null)
+        .telefones(usuarioDTO.getTelefones() != null ?
+                        paraListaTelefone(usuarioDTO.getTelefones()) : null)
                 .build();
+
     }
 
     public List<Endereco> paraListaEndereco(List<EnderecoDTO> enderecoDTOS) {
@@ -40,6 +42,7 @@ public class UsuarioConverter {
                 .estado(enderecoDTO.getEstado())
                 .cep(enderecoDTO.getCep())
                 .build();
+
     }
 
     public List<Telefone> paraListaTelefone(List<TelefoneDTO> telefoneDTOS) {
@@ -55,15 +58,16 @@ public class UsuarioConverter {
 
     // ---------- Entidade -> DTO ----------
 
-    public UsuarioDTO paraUsuarioDTO(Usuario usuario) {
+    public UsuarioDTO paraUsuarioDTO(Usuario usuarioDTO) {
         return UsuarioDTO.builder()
     // id: vem do banco (gerado automaticamente), então é só copiar da entidade para o DTO
-                .id(usuario.getId())
-                .nome(usuario.getNome())
-                .email(usuario.getEmail())
-                .senha(usuario.getSenha())
-                .enderecos(paraListaEnderecoDTO(usuario.getEnderecos()))
-                .telefones(paraListaTelefoneDTO(usuario.getTelefones()))
+                .nome(usuarioDTO.getNome())
+                .email(usuarioDTO.getEmail())
+                .senha(usuarioDTO.getSenha())
+                .enderecos(usuarioDTO.getEnderecos() != null ?
+                        paraListaEnderecoDTO(usuarioDTO.getEnderecos()) : null)
+                .telefones(usuarioDTO.getTelefones() != null ?
+                        paraListaTelefoneDTO(usuarioDTO.getTelefones()) : null)
                 .build();
     }
 
