@@ -38,17 +38,24 @@ public class JwtRequestFilter extends OncePerRequestFilter {
         if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
             final String token = authorizationHeader.substring(7);
             try {
-                // extractClaims já valida assinatura e expiração; se falhar, cai no catch
+                // extrairEmaildoToken já valida assinatura e expiração; se falhar, cai no catch.
+                // O servidor NÃO guarda tokens em lugar nenhum: ele recalcula a assinatura com a
+                // chave secreta e compara. Se o conteúdo foi adulterado, a assinatura não bate.
                 final String username = jwtUtil.extrairEmaildoToken(token);
 
+                // getAuthentication() == null: ainda ninguém foi autenticado nesta requisição
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                    // Busca o usuário no banco pelo e-mail que estava dentro do token
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     if (jwtUtil.validateToken(token, username)) {
+                        // Avisa o Spring Security: "este usuário está autenticado nesta requisição".
+                        // Daqui em diante, as rotas protegidas passam a aceitar o pedido.
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities());
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }
+
             } catch (JwtException | UsernameNotFoundException e) {
                 // Token inválido/expirado ou usuário inexistente: segue sem autenticar (resultado: acesso negado)
                 logger.debug("Token JWT rejeitado: " + e.getMessage());
