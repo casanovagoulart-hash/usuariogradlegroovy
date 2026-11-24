@@ -14,7 +14,10 @@ COPY . .
 # Executa o build do projeto utilizando o Gradle.
 # A flag '--no-daemon' evita que o Gradle mantenha processos em segundo plano,
 # economizando memória e evitando travamentos em ambientes de container.
-RUN gradle build -x test --no-daemon
+# O comando 'bootJar' gera exclusivamente o artefato executável
+# com o Spring Boot embutido, evitando a geração do arquivo '-plain.jar' que causa
+# conflito no comando COPY --from=build /app/build/libs/*.jar.
+RUN gradle bootJar --no-daemon
 
 # =====================================================================
 # ETAPA 2: Imagem Final de Execução (Runtime Leve com Alpine)

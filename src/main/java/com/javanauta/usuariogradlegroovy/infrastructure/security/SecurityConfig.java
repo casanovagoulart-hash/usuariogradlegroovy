@@ -49,15 +49,17 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         .requestMatchers(HttpMethod.GET, "/auth").permitAll()// Permite acesso ao endpoint GET /auth sem autenticação
                         .requestMatchers(HttpMethod.POST, "/usuario").permitAll() // Permite acesso ao endpoint POST /usuario sem autenticação
-                        .requestMatchers("/usuario/**").authenticated() // Requer autenticação para qualquer endpoint que comece com /usuario/
-                        .anyRequest().authenticated() // Requer autenticação para todas as outras requisições
+                        .requestMatchers(HttpMethod.POST, "/usuario/login").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/usuario/endereco/**").permitAll()
+                        .requestMatchers("/usuario/**").authenticated() // Requer autenticação para qualquer endpoint que comece com /usuario/.
+                        .anyRequest().authenticated() // Requer autenticação para todas as outras requisições.
                 )
                 .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Configura a política de sessão como stateless (sem sessão)
+                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Configura a política de sessão como stateless (sem sessão).
                 )
-                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class); // Adiciona o filtro JWT antes do filtro de autenticação padrão
+                .addFilterBefore(jwtRequestFilter, UsernamePasswordAuthenticationFilter.class); // Adiciona o filtro JWT antes do filtro de autenticação padrão.
 
-        // Retorna a configuração do filtro de segurança construída
+        // Retorna a configuração do filtro de segurança construída.
         return http.build();
     }
 
@@ -67,13 +69,13 @@ public class SecurityConfig {
     // (É isso que o UsuarioService precisa para criptografar a senha).
     @Bean
     public BCryptPasswordEncoder bCryptPasswordEncoder() {
-        return new BCryptPasswordEncoder(); // Retorna uma instância de BCryptPasswordEncoder
+        return new BCryptPasswordEncoder(); // Retorna uma instância de BCryptPasswordEncoder.
     }
 
-    // Configura o AuthenticationManager usando AuthenticationConfiguration
+    // Configura o AuthenticationManager usando AuthenticationConfiguration.
     @Bean
     public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
-        // Obtém e retorna o AuthenticationManager da configuração de autenticação
+        // Obtém e retorna o AuthenticationManager da configuração de autenticação.
         return authenticationConfiguration.getAuthenticationManager();
     }
 
