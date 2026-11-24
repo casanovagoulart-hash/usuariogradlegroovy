@@ -4,6 +4,8 @@ import com.javanauta.usuariogradlegroovy.business.DTO.EnderecoDTO;
 import com.javanauta.usuariogradlegroovy.business.DTO.TelefoneDTO;
 import com.javanauta.usuariogradlegroovy.business.DTO.UsuarioDTO;
 import com.javanauta.usuariogradlegroovy.business.UsuarioService;
+import com.javanauta.usuariogradlegroovy.business.ViaCepService;
+import com.javanauta.usuariogradlegroovy.infrastructure.clients.ViaCepDTO;
 import com.javanauta.usuariogradlegroovy.infrastructure.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -21,6 +23,8 @@ import org.springframework.web.bind.annotation.*;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+
+    private final ViaCepService viaCepService;
 
     // AuthenticationManager: confere e-mail e senha usando o UserDetailsServiceImpl e o BCrypt
     private final AuthenticationManager authenticationManager;
@@ -99,6 +103,10 @@ public class UsuarioController {
         return ResponseEntity.ok().build();
     }
 
+    @GetMapping("/endereco/{cep}")
+    public ResponseEntity<ViaCepDTO> buscarDadosCep(@PathVariable String cep) {
 
+        return ResponseEntity.ok(viaCepService.buscaDadosEndereco(cep));
+    }
 
 }
