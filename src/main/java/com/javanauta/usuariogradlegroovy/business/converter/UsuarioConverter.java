@@ -57,19 +57,21 @@ public class UsuarioConverter {
     }
 
     // ---------- Entidade -> DTO ----------
-
-    public UsuarioDTO paraUsuarioDTO(Usuario usuarioDTO) {
+    public UsuarioDTO paraUsuarioDTO(Usuario usuario) {
         return UsuarioDTO.builder()
-    // id: vem do banco (gerado automaticamente), então é só copiar da entidade para o DTO
-                .nome(usuarioDTO.getNome())
-                .email(usuarioDTO.getEmail())
-                .senha(usuarioDTO.getSenha())
-                .enderecos(usuarioDTO.getEnderecos() != null ?
-                        paraListaEnderecoDTO(usuarioDTO.getEnderecos()) : null)
-                .telefones(usuarioDTO.getTelefones() != null ?
-                        paraListaTelefoneDTO(usuarioDTO.getTelefones()) : null)
+                // CORREÇÃO: Incluído o ID gerado pelo banco
+                .id(usuario.getId())
+                .nome(usuario.getNome())
+                .email(usuario.getEmail())
+                // SEGURANÇA: Nunca trafegar o hash da senha (mesmo BCrypt) no DTO de saída.
+                // Reduz o risco de exposição em logs HTTP, caches ou respostas de API.
+                .enderecos(usuario.getEnderecos() != null ?
+                        paraListaEnderecoDTO(usuario.getEnderecos()) : null)
+                .telefones(usuario.getTelefones() != null ?
+                        paraListaTelefoneDTO(usuario.getTelefones()) : null)
                 .build();
     }
+
 
     public List<EnderecoDTO> paraListaEnderecoDTO(List<Endereco> enderecos) {
         return enderecos.stream().map(this::paraEnderecoDTO).toList();

@@ -1,11 +1,65 @@
-HELP.md
-.gradle
+# =====================================================================
+# 1. SEGURANÇA E VARIÁVEIS DE AMBIENTE (CRITICAL OPSEC)
+# =====================================================================
+# Bloqueia o arquivo .env principal e qualquer variação por ambiente (.env.local, .env.prod).
+# Motivo: Evita o vazamento de segredos críticos (JWT_SECRET, DB_PASSWORD, MAIL_PASSWORD)
+# no histórico público do GitHub.
+.env
+.env.*
+
+# Exceção explícita (!): Permite versionar o arquivo de modelo sem valores reais.
+# Motivo: Documenta para outros desenvolvedores quais variáveis são necessárias para
+# subir o docker-compose sem comprometer a segurança.
+!.env.example
+
+# Bloqueia certificados digitais, chaves privadas e keystores locais
+*.pem
+*.key
+*.p12
+*.jks
+
+# =====================================================================
+# 2. ARTEFATOS DE BUILD E COMPILAÇÃO (MAVEN & GRADLE)
+# =====================================================================
+# Ignora diretórios de saída gerados durante o empacotamento (.jar, classes compiladas).
+# Motivo: Código binário gerado não deve ser versionado; o Git guarda apenas código-fonte.
+target/
 build/
-!gradle/wrapper/gradle-wrapper.jar
+out/
+
+# Mantém pastas chamadas 'target' ou 'build' caso existam dentro de pacotes Java (src/)
+!**/src/main/**/target/
+!**/src/test/**/target/
 !**/src/main/**/build/
 !**/src/test/**/build/
 
-### STS ###
+# Ignora o cache interno e metadados locais do Gradle
+.gradle/
+
+# Ignora o binário compilado do Maven Wrapper (o script mvnw continua versionado)
+.mvn/wrapper/maven-wrapper.jar
+
+# =====================================================================
+# 3. LOGS, DIAGNÓSTICOS E ARQUIVOS TEMPORÁRIOS
+# =====================================================================
+# Evita subir arquivos de log que podem conter tokens JWT ou dados sensíveis em modo DEBUG
+*.log
+logs/
+
+# Documentação gerada automaticamente pelo Spring Initializr
+HELP.md
+
+# =====================================================================
+# 4. CONFIGURAÇÕES DE IDES E SISTEMA OPERACIONAL
+# =====================================================================
+# IntelliJ IDEA: Ignora configurações locais da máquina (caminhos de SDK, janelas abertas)
+.idea/
+*.iws
+*.iml
+*.ipr
+
+# VS Code e Eclipse / STS
+.vscode/
 .apt_generated
 .classpath
 .factorypath
@@ -13,25 +67,8 @@ build/
 .settings
 .springBeans
 .sts4-cache
-bin/
-!**/src/main/**/bin/
-!**/src/test/**/bin/
 
-### IntelliJ IDEA ###
-.idea
-*.iws
-*.iml
-*.ipr
-out/
-!**/src/main/**/out/
-!**/src/test/**/out/
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-
-### VS Code ###
-.vscode/
+# Cache de miniaturas e metadados do Windows e macOS
+Thumbs.db
+desktop.ini
+.DS_Store

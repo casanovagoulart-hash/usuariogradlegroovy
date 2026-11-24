@@ -7,8 +7,8 @@ import com.javanauta.usuariogradlegroovy.business.converter.UsuarioConverter;
 import com.javanauta.usuariogradlegroovy.infrastructure.entitys.Endereco;
 import com.javanauta.usuariogradlegroovy.infrastructure.entitys.Telefone;
 import com.javanauta.usuariogradlegroovy.infrastructure.entitys.Usuario;
-import com.javanauta.usuariogradlegroovy.infrastructure.exceptions.ConflictException;
-import com.javanauta.usuariogradlegroovy.infrastructure.exceptions.ResourceNotFoundException;
+import com.javanauta.usuariogradlegroovy.infrastructure.exceptions.ConflictExceptions;
+import com.javanauta.usuariogradlegroovy.infrastructure.exceptions.ResourceNotFoundExceptions;
 import com.javanauta.usuariogradlegroovy.infrastructure.repository.EnderecoRepository;
 import com.javanauta.usuariogradlegroovy.infrastructure.repository.TelefoneRepository;
 import com.javanauta.usuariogradlegroovy.infrastructure.repository.UsuarioRepository;
@@ -19,9 +19,9 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-// @Service: avisa o Spring que esta classe é um bean da camada de negócio
+// @Service: avisa o Spring que esta classe é um bean da camada de negócio.
 // @RequiredArgsConstructor: o Lombok gera o construtor com todos os campos final,
-// e é por esse construtor que o Spring injeta cada dependência abaixo
+// e é por esse construtor que o Spring injeta cada dependência abaixo.
 @Service
 @RequiredArgsConstructor
 public class UsuarioService {
@@ -32,7 +32,7 @@ public class UsuarioService {
     private final JwtUtil jwtUtil;
     private final PasswordEncoder passwordEncoder;
     // Repositories de Endereco e Telefone: precisam estender JpaRepository,
-    // senão o Spring não cria o bean e a aplicação não sobe
+    // senão o Spring não cria o bean e a aplicação não sobe.
     private final EnderecoRepository enderecoRepository;
     private final TelefoneRepository telefoneRepository;
 
@@ -47,7 +47,7 @@ public class UsuarioService {
 
     public void emailExiste(String email) {
         if (verificaEmailExistente(email)) {
-            throw new ConflictException("Email já cadastrado! " + email);
+            throw new ConflictExceptions("Email já cadastrado! " + email);
         }
     }
 
@@ -71,7 +71,7 @@ public class UsuarioService {
         /* Busca os dados do usuário no banco de dados. Quem está logado só altera os PRÓPRIOS dados,
            porque o e-mail vem do token, e não de algo que o cliente possa escolher. */
         Usuario usuarioEntity = usuarioRepository.findByEmail(email).orElseThrow(() ->
-                new ResourceNotFoundException("Email não encontrado!"));
+                new ResourceNotFoundExceptions("Email não encontrado!"));
 
         /* Mescla os dados que recebemos na requisição DTO com os dados do banco de dados.
            O id vem SEMPRE da entidade (banco), nunca do DTO. */
@@ -91,7 +91,7 @@ public class UsuarioService {
         // e o método para aqui. Não precisa criar nada na classe Usuario.
         return usuarioConverter.paraUsuarioDTO(
                 usuarioRepository.findByEmail(email).orElseThrow(
-                        () -> new ResourceNotFoundException("Email não encontrado! " + email)));
+                        () -> new ResourceNotFoundExceptions("Email não encontrado! " + email)));
     }
 
     // @Transactional: obrigatório para métodos de delete derivados do Spring Data
@@ -107,7 +107,7 @@ public class UsuarioService {
         // Sem cast: com JpaRepository<Endereco, Long>, o findById já devolve Optional<Endereco>.
         // orElseThrow: se não achar, lança a exceção e o método para aqui.
         Endereco entity = enderecoRepository.findById(idEndereco).orElseThrow(() ->
-                new ResourceNotFoundException("id não encontrado! " + idEndereco));
+                new ResourceNotFoundExceptions("id não encontrado! " + idEndereco));
 
         // 2) Mescla: o que veio no DTO sobrescreve, o que veio nulo mantém o valor do banco
         Endereco endereco = usuarioConverter.updateEndereco(enderecoDTO, entity);
@@ -121,7 +121,7 @@ public class UsuarioService {
 
         // 1) Busca o telefone no banco pelo id (Optional<Telefone>, sem cast)
         Telefone entity = telefoneRepository.findById(idTelefone).orElseThrow(() ->
-                new ResourceNotFoundException("id não encontrado! " + idTelefone));
+                new ResourceNotFoundExceptions("id não encontrado! " + idTelefone));
 
         // 2) Mescla os dados do DTO com os dados que já estão no banco
         Telefone telefone = usuarioConverter.updateTelefone(telefoneDTO, entity);
@@ -131,23 +131,30 @@ public class UsuarioService {
     }
 
     public EnderecoDTO cadastraEndereco(String token, EnderecoDTO dto) {
-        String email = jwtUtil.extrairEmaildoToken(token);
+        // CORREÇÃO: Remove o prefixo "Bearer " antes de decodificar o JWT
+        String tokenPuro = token.startsWith("Bearer ") ? token.substring(7) : token;
+        String email = jwtUtil.extrairEmaildoToken(tokenPuro);
+
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow(() ->
-                new ResourceNotFoundException("Email não localizado! " + email));
+                new ResourceNotFoundExceptions("Email não localizado! " + email));
 
         Endereco endereco = usuarioConverter.paraEnderecoEntity(dto, usuario.getId());
         Endereco enderecoEntity = enderecoRepository.save(endereco);
-                return usuarioConverter.paraEnderecoDTO(enderecoEntity);
+        return usuarioConverter.paraEnderecoDTO(enderecoEntity);
     }
 
     public TelefoneDTO cadastraTelefone(String token, TelefoneDTO dto) {
-        String email = jwtUtil.extrairEmaildoToken(token);
+        // CORREÇÃO: Remove o prefixo "Bearer " antes de decodificar o JWT
+        String tokenPuro = token.startsWith("Bearer ") ? token.substring(7) : token;
+        String email = jwtUtil.extrairEmaildoToken(tokenPuro);
+
         Usuario usuario = usuarioRepository.findByEmail(email).orElseThrow(() ->
-                new ResourceNotFoundException("Email não localizado! " + email));
+                new ResourceNotFoundExceptions("Email não localizado! " + email));
 
         Telefone telefone = usuarioConverter.paraTelefoneEntity(dto, usuario.getId());
         Telefone telefoneEntity = telefoneRepository.save(telefone);
-                return usuarioConverter.paraTelefoneDTO(telefoneEntity);
+        return usuarioConverter.paraTelefoneDTO(telefoneEntity);
     }
+
 
 }
