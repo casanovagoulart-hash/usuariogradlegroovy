@@ -1,0 +1,93 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_DB: db_usuario
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    # SEGURANÇA: Porta não exposta para a internet/host externo; acessível apenas pela rede interna Docker
+    expose:
+      - "5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db_usuario"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-net
+
+  mongo:
+    image: mongo:7
+    container_name: mongo-db
+    expose:
+      - "27017"
+    networks:
+      - backend-net
+
+  usuario:
+    build: ../usuariogradlegroovy
+    container_name: usuario-service
+    expose:
+      - "8080"
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/db_usuario
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - backend-net
+
+  notificacao:
+    build: ../notificacao
+    container_name: notificacao-service
+    expose:
+      - "8082"
+    environment:
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+    networks:
+      - backend-net
+
+  agendadortarefas:
+    build: ../agendadortarefas
+    container_name: agendador-service
+    expose:
+      - "8081"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      MONGO_URI: mongodb://mongo:27017/db_agendador
+      USUARIO_URL: http://usuario:8080
+    depends_on:
+      - db
+      - mongo
+    networks:
+      - backend-net
+
+  bff:
+    build: .
+    container_name: bff-service
+    # SEGURANÇA ZERO TRUST: Única porta exposta para o exterior.
+    # Nenhum microsserviço interno ou banco de dados pode ser acessado diretamente de fora.
+    ports:
+      - "8083:8083"
+    environment:
+      JWT_SECRET: ${JWT_SECRET}
+      USUARIO_URL: http://usuario:8080
+      AGENDADOR_TAREFAS_URL: http://agendadortarefas:8081
+      NOTIFICACAO_URL: http://notificacao:8082
+      USUARIO_CRON_EMAIL: ${USUARIO_CRON_EMAIL}
+      USUARIO_CRON_SENHA: ${USUARIO_CRON_SENHA}
+    depends_on:
+      - usuario
+      - agendadortarefas
+      - notificacao
+    networks:
+      - backend-net
+
+networks:
+  backend-net:
+    driver: bridge
