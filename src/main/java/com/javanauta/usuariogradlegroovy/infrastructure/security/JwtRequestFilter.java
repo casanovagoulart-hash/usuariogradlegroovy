@@ -1,10 +1,16 @@
 package com.javanauta.usuariogradlegroovy.infrastructure.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.javanauta.usuariogradlegroovy.business.DTO.ErroResponseDTO;
 import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -13,56 +19,66 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
-// Define a classe JwtRequestFilter, que estende OncePerRequestFilter
 public class JwtRequestFilter extends OncePerRequestFilter {
 
-    // Define propriedades para armazenar instâncias de JwtUtil e UserDetailsService
+    private static final String BEARER_PREFIX = "Bearer ";
+
     private final JwtUtil jwtUtil;
     private final UserDetailsService userDetailsService;
+    private final ObjectMapper objectMapper;
 
-    // Construtor que inicializa as propriedades com instâncias fornecidas
     public JwtRequestFilter(JwtUtil jwtUtil, UserDetailsService userDetailsService) {
         this.jwtUtil = jwtUtil;
         this.userDetailsService = userDetailsService;
+        // Configura o ObjectMapper uma única vez no construtor para formatar LocalDateTime como texto legível
+        this.objectMapper = new ObjectMapper()
+                .registerModule(new JavaTimeModule())
+                .disable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS);
     }
 
-    // Método chamado uma vez por requisição para processar o filtro
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
             throws ServletException, IOException {
 
-        // Obtém o valor do header "Authorization" da requisição
         final String authorizationHeader = request.getHeader("Authorization");
 
-        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
-            final String token = authorizationHeader.substring(7);
+        if (authorizationHeader != null && authorizationHeader.startsWith(BEARER_PREFIX)) {
+            final String token = authorizationHeader.substring(BEARER_PREFIX.length());
             try {
-                // extrairEmaildoToken já valida assinatura e expiração; se falhar, cai no catch.
-                // O servidor NÃO guarda tokens em lugar nenhum: ele recalcula a assinatura com a
-                // chave secreta e compara. Se o conteúdo foi adulterado, a assinatura não bate.
                 final String username = jwtUtil.extrairEmaildoToken(token);
 
-                // getAuthentication() == null: ainda ninguém foi autenticado nesta requisição
                 if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-                    // Busca o usuário no banco pelo e-mail que estava dentro do token
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
                     if (jwtUtil.validateToken(token, username)) {
-                        // Avisa o Spring Security: "este usuário está autenticado nesta requisição".
-                        // Daqui em diante, as rotas protegidas passam a aceitar o pedido.
                         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
                                 userDetails, null, userDetails.getAuthorities());
                         SecurityContextHolder.getContext().setAuthentication(authentication);
                     }
                 }
-
             } catch (JwtException | UsernameNotFoundException e) {
-                // Token inválido/expirado ou usuário inexistente: segue sem autenticar (resultado: acesso negado)
                 logger.debug("Token JWT rejeitado: " + e.getMessage());
+                escreverErroJson(response, HttpStatus.UNAUTHORIZED.value(), "Token JWT inválido ou expirado", request.getRequestURI());
+                return;
             }
         }
 
-        // Continua a cadeia de filtros, permitindo que a requisição prossiga
         chain.doFilter(request, response);
+    }
+
+    private void escreverErroJson(HttpServletResponse response, int status, String mensagem, String path) throws IOException {
+        ErroResponseDTO erro = ErroResponseDTO.builder()
+                .timestamp(LocalDateTime.now())
+                .status(status)
+                .message(mensagem)
+                .path(path)
+                .build();
+
+        response.setStatus(status);
+        response.setContentType(MediaType.APPLICATION_JSON_VALUE);
+        response.setCharacterEncoding("UTF-8");
+        // CORREÇÃO: Passa apenas o JSON serializado para o writer
+        response.getWriter().write(objectMapper.writeValueAsString(erro));
     }
 }
